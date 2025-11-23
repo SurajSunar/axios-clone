@@ -15,6 +15,24 @@ class Fetcher {
 
   get(url, config) {
     const finalConfig = this.configMerge(config);
+    return this.dispatchRequest(url, { finalConfig, method: "GET" });
+  }
+
+  post(url, config, payload) {
+    const finalConfig = this.configMerge({
+      ...config,
+      body: payload,
+      method: "POST",
+    });
+    return this.dispatchRequest(url, finalConfig);
+  }
+
+  put(url, config, payload) {
+    const finalConfig = this.configMerge({
+      ...config,
+      body: payload,
+      method: "PUT",
+    });
     return this.dispatchRequest(url, finalConfig);
   }
 
@@ -24,7 +42,7 @@ class Fetcher {
       ...config,
       header: {
         ...(this.config?.header || {}),
-        ...(config.header || {}),
+        ...(config?.header || {}),
       },
     };
   }
