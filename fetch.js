@@ -1,5 +1,6 @@
 class Fetcher {
   config = {
+    timeout: 1000,
     header: {
       "content-type": "application/json",
     },
@@ -10,12 +11,29 @@ class Fetcher {
   }
 
   async dispatchRequest(url, config) {
-    return await fetch(url, config);
+    const abortController = new AbortController();
+    const timeout = config.timeout || 0;
+    let timer;
+
+    if (timeout) {
+      timer = setTimeout(() => {
+        abortController.abort();
+      }, timeout);
+    }
+
+    try {
+      return await fetch(url, {
+        ...config,
+        signal: abortController.signal,
+      });
+    } finally {
+      timer && clearTimeout(timer);
+    }
   }
 
   get(url, config) {
     const finalConfig = this.configMerge(config);
-    return this.dispatchRequest(url, { finalConfig, method: "GET" });
+    return this.dispatchRequest(url, { ...finalConfig, method: "GET" });
   }
 
   post(url, config, payload) {
@@ -32,6 +50,15 @@ class Fetcher {
       ...config,
       body: payload,
       method: "PUT",
+    });
+    return this.dispatchRequest(url, finalConfig);
+  }
+
+  delete(url, config) {
+    const finalConfig = this.configMerge({
+      ...config,
+      body: payload,
+      method: "DELETE",
     });
     return this.dispatchRequest(url, finalConfig);
   }
