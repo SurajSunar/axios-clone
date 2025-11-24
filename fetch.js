@@ -22,7 +22,7 @@ class Fetcher {
     }
 
     try {
-      return await fetch(url, {
+      return await fetch(config.baseUrl + url, {
         ...config,
         signal: abortController.signal,
       });

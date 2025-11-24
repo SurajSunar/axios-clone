@@ -1,6 +1,7 @@
 import Fetcher from "./fetch.js";
 
 const app = Fetcher.create({
+  baseUrl: "https://jsonplaceholder.typicode.com",
   header: {
     "content-type": "application/json",
   },
@@ -50,9 +51,10 @@ const app = Fetcher.create({
 
 //get timeout call
 app
-  .get("https://jsonplaceholder.typicode.com/todos", {
+  .get("/todos", {
     "content-type": "application/json",
     "x-user-id": "1",
+    timeout: 1000,
   })
   .then((response) => response.json())
   .then((json) => console.log(json));
