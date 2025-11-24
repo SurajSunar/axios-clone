@@ -49,33 +49,39 @@ const app = Fetcher.create({
 // //   .then((response) => response.json())
 // //   .then((json) => console.log(json));
 
-// app.addRequestInterceptor(
-//   (config) => {
-//     console.log("Inside request Interceptor", config);
+app.addRequestInterceptor(
+  (config) => {
+    console.log("Inside request Interceptor", config);
 
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-// app.addResponseInterceptor(
-//   (config) => {
-//     console.log("Inside response Interceptor", config);
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
+app.addResponseInterceptor(
+  (config) => {
+    console.log("Inside response Interceptor", config);
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // //get timeout call
-app
-  .get("/todos/95", {
+
+async function main() {
+  const result = await app.get("/todos/95", {
     "content-type": "application/json",
     "x-user-id": "1",
     timeout: 1000,
-  })
-  .then((response) => response.json())
-  .then((json) => console.log(json));
+  });
+
+  const response = await result.json();
+
+  console.log("final response =", response);
+}
+
+main();
