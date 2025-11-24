@@ -5,12 +5,55 @@ class Fetcher {
       "content-type": "application/json",
     },
   };
+  requestInterceptor = [];
+  responseInterceptor = [];
 
   constructor(config) {
     this.config = this.configMerge(config);
   }
 
-  async dispatchRequest(url, config) {
+  addRequestInterceptor(successFn, failFn) {
+    this.requestInterceptor.push({ successFn, failFn });
+  }
+
+  addResponseInterceptor(successFn, failFn) {
+    this.responseInterceptor.push({ successFn, failFn });
+  }
+
+  async request(url, config) {
+    let promise = Promise.resolve({ url, config });
+
+    const chain = [
+      ...this.requestInterceptor,
+      { successFn: this.dispatchRequest.bind(this) },
+      ...this.responseInterceptor,
+    ];
+
+    for (const { successFn, failFn } of chain) {
+      promise = promise.then(
+        (data) => {
+          try {
+            return successFn(data);
+          } catch (error) {
+            if (failFn) {
+              return failFn(error);
+            }
+            return Promise.reject(error);
+          }
+        },
+        (error) => {
+          if (failFn) {
+            return failFn(error);
+          }
+          return Promise.reject(error);
+        }
+      );
+    }
+
+    return promise;
+  }
+
+  async dispatchRequest({ url, config }) {
     const abortController = new AbortController();
     const timeout = config.timeout || 0;
     let timer;
@@ -33,7 +76,7 @@ class Fetcher {
 
   get(url, config) {
     const finalConfig = this.configMerge(config);
-    return this.dispatchRequest(url, { ...finalConfig, method: "GET" });
+    return this.request(url, { ...finalConfig, method: "GET" });
   }
 
   post(url, config, payload) {
@@ -42,7 +85,7 @@ class Fetcher {
       body: payload,
       method: "POST",
     });
-    return this.dispatchRequest(url, finalConfig);
+    return this.request(url, finalConfig);
   }
 
   put(url, config, payload) {
@@ -51,7 +94,7 @@ class Fetcher {
       body: payload,
       method: "PUT",
     });
-    return this.dispatchRequest(url, finalConfig);
+    return this.request(url, finalConfig);
   }
 
   delete(url, config) {
@@ -60,7 +103,7 @@ class Fetcher {
       body: payload,
       method: "DELETE",
     });
-    return this.dispatchRequest(url, finalConfig);
+    return this.request(url, finalConfig);
   }
 
   configMerge(config) {
